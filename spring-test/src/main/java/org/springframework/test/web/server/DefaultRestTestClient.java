@@ -17,6 +17,7 @@
 package org.springframework.test.web.server;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
 
@@ -30,8 +31,11 @@ public class DefaultRestTestClient implements RestTestClient {
 
 	private final RestClient restClient;
 
+	private final AtomicLong requestIndex = new AtomicLong();
+
 	public DefaultRestTestClient(RestClient.Builder restClientBuilder) {
 		this.restClient = restClientBuilder.build();
+
 	}
 
 	@Override
@@ -48,11 +52,13 @@ public class DefaultRestTestClient implements RestTestClient {
 
 		private RestClient.RequestBodyUriSpec requestHeadersUriSpec;
 		private RestClient.RequestBodySpec requestBodySpec;
+		private final String requestId;
 
 
 		public DefaultRequestBodyUriSpec(RestClient.RequestBodyUriSpec spec) {
 			this.requestHeadersUriSpec = spec;
 			this.requestBodySpec = spec;
+			this.requestId = String.valueOf(requestIndex.incrementAndGet());
 		}
 
 		@Override
@@ -69,6 +75,7 @@ public class DefaultRestTestClient implements RestTestClient {
 
 		@Override
 		public ResponseSpec exchange() {
+			this.requestBodySpec = requestBodySpec.header(RESTTESTCLIENT_REQUEST_ID, requestId);
 			ExchangeResult exchangeResult = requestBodySpec.exchange(
 					(clientRequest, clientResponse) -> new ExchangeResult(clientResponse));
 			return new DefaultResponseSpec(exchangeResult);
