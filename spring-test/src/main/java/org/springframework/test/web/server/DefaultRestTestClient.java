@@ -18,21 +18,20 @@ package org.springframework.test.web.server;
 
 import java.net.URI;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.http.HttpMethod;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse;
 
 /**
  * @author Rob Worsnop
  */
 public class DefaultRestTestClient implements RestTestClient {
 
-	private final RestClient.Builder restClientBuilder;
+	private final RestClient restClient;
 
 	public DefaultRestTestClient(RestClient.Builder restClientBuilder) {
-		this.restClientBuilder = restClientBuilder;
+		this.restClient = restClientBuilder.build();
 	}
 
 	@Override
@@ -41,33 +40,36 @@ public class DefaultRestTestClient implements RestTestClient {
 	}
 
 	private RequestBodyUriSpec methodInternal(HttpMethod httpMethod) {
-		return new DefaultRequestBodyUriSpec(httpMethod);
+		return new DefaultRequestBodyUriSpec(restClient.method(httpMethod));
 	}
 
 
 	private class DefaultRequestBodyUriSpec implements RequestBodyUriSpec {
 
-		private final HttpMethod httpMethod;
+		private RestClient.RequestBodyUriSpec requestHeadersUriSpec;
+		private RestClient.RequestBodySpec requestBodySpec;
 
-		@Nullable
-		private URI uri;
 
-		public DefaultRequestBodyUriSpec(HttpMethod httpMethod) {
-			this.httpMethod = httpMethod;
+		public DefaultRequestBodyUriSpec(RestClient.RequestBodyUriSpec spec) {
+			this.requestHeadersUriSpec = spec;
+			this.requestBodySpec = spec;
 		}
 
 		@Override
 		public RequestBodySpec uri(URI uri) {
-			this.uri = uri;
+			this.requestBodySpec = requestHeadersUriSpec.uri(uri);
+			return this;
+		}
+
+		@Override
+		public RequestBodySpec header(String headerName, String... headerValues) {
+			this.requestBodySpec = requestHeadersUriSpec.header(headerName, headerValues);
 			return this;
 		}
 
 		@Override
 		public ResponseSpec exchange() {
-			RestClient.RequestBodyUriSpec bodyUriSpec = restClientBuilder.build().method(httpMethod);
-			RestClient.RequestBodySpec bodySpec = uri != null ? bodyUriSpec.uri(uri) : bodyUriSpec;
-
-			ExchangeResult exchangeResult = bodySpec.exchange(
+			ExchangeResult exchangeResult = requestBodySpec.exchange(
 					(clientRequest, clientResponse) -> new ExchangeResult(clientResponse));
 			return new DefaultResponseSpec(exchangeResult);
 		}

@@ -16,9 +16,10 @@
 
 package org.springframework.test.web.server;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.lang.Nullable;
 import org.springframework.test.util.AssertionErrors;
 import static org.springframework.test.util.AssertionErrors.*;
 
@@ -31,7 +32,7 @@ import static org.springframework.test.util.AssertionErrors.*;
  */
 public class StatusAssertions {
 
-	private final @Nullable ExchangeResult exchangeResult;
+	private final @org.jspecify.annotations.Nullable ExchangeResult exchangeResult;
 
 	private final RestTestClient.ResponseSpec responseSpec;
 

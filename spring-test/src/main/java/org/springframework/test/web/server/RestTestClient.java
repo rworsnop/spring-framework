@@ -97,12 +97,23 @@ public interface RestTestClient {
 	}
 
 
+
+
 	/**
 	 * Specification for adding request headers and performing an exchange.
 	 *
 	 * @param <S> a self reference to the spec type
 	 */
 	interface RequestHeadersSpec<S extends RequestHeadersSpec<S>> {
+
+		/**
+		 * Add the given, single header value under the given name.
+		 * @param headerName  the header name
+		 * @param headerValues the header value(s)
+		 * @return the same instance
+		 */
+		S header(String headerName, String... headerValues);
+
 		/**
 		 * Perform the exchange without a request body.
 		 * @return spec for decoding the response
