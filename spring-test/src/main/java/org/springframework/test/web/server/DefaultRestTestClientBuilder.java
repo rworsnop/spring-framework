@@ -16,6 +16,8 @@
 
 package org.springframework.test.web.server;
 
+import org.springframework.web.client.RestClient;
+
 /**
  * @author Rob Worsnop
  */
@@ -23,6 +25,6 @@ class DefaultRestTestClientBuilder implements RestTestClient.Builder {
 
 	@Override
 	public RestTestClient build() {
-		return new DefaultRestTestClient();
+		return new DefaultRestTestClient(RestClient.builder());
 	}
 }

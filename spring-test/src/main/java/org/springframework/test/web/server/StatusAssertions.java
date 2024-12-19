@@ -17,7 +17,10 @@
 package org.springframework.test.web.server;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.lang.Nullable;
+import org.springframework.test.util.AssertionErrors;
+import static org.springframework.test.util.AssertionErrors.*;
 
 /**
  * Assertions on the response status.
@@ -28,11 +31,11 @@ import org.springframework.test.web.reactive.server.WebTestClient;
  */
 public class StatusAssertions {
 
-	private final ExchangeResult exchangeResult;
+	private final @Nullable ExchangeResult exchangeResult;
 
 	private final RestTestClient.ResponseSpec responseSpec;
 
-	public StatusAssertions(ExchangeResult exchangeResult, RestTestClient.ResponseSpec responseSpec) {
+	public StatusAssertions(@Nullable ExchangeResult exchangeResult, RestTestClient.ResponseSpec responseSpec) {
 		this.exchangeResult = exchangeResult;
 		this.responseSpec = responseSpec;
 	}
@@ -44,7 +47,10 @@ public class StatusAssertions {
 		return assertStatusAndReturn(HttpStatus.OK);
 	}
 
-	private RestTestClient.ResponseSpec assertStatusAndReturn(HttpStatus httpStatus) {
+	private RestTestClient.ResponseSpec assertStatusAndReturn(HttpStatus expected) {
+		assertNotNull("exchangeResult unexpectedly null", exchangeResult);
+		HttpStatusCode actual = exchangeResult.getStatus();
+		exchangeResult.assertWithDiagnostics(() -> AssertionErrors.assertEquals("Status", expected, actual));
 		return this.responseSpec;
 	}
 

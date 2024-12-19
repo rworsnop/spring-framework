@@ -63,6 +63,19 @@ public interface RestTestClient {
 		 * Assertions on the response status.
 		 */
 		StatusAssertions expectStatus();
+
+		/**
+		 * Consume and decode the response body to {@code byte[]} and then apply
+		 * assertions on the raw content (for example, isEmpty, JSONPath, etc.).
+		 */
+		BodyContentSpec expectBody();
+	}
+
+	/**
+	 * Spec for expectations on the response body content.
+	 */
+	interface BodyContentSpec {
+
 	}
 
 	/**
