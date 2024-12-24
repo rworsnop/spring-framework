@@ -84,6 +84,10 @@ public interface RestTestClient {
 		 */
 		CookieAssertions expectCookie();
 
+		/**
+		 * Assertions on the headers of the response.
+		 */
+		HeaderAssertions expectHeader();
 	}
 
 	/**

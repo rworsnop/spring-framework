@@ -112,6 +112,11 @@ public class DefaultRestTestClient implements RestTestClient {
 		public CookieAssertions expectCookie() {
 			return new CookieAssertions(exchangeResult, this);
 		}
+
+		@Override
+		public HeaderAssertions expectHeader() {
+			return new HeaderAssertions(exchangeResult, this);
+		}
 	}
 
 	private static class DefaultBodyContentSpec implements BodyContentSpec {
