@@ -107,6 +107,11 @@ public class DefaultRestTestClient implements RestTestClient {
 		public <B> BodySpec<B, ?> expectBody(Class<B> bodyType) {
 			return new DefaultBodySpec<>(exchangeResult, bodyType);
 		}
+
+		@Override
+		public CookieAssertions expectCookie() {
+			return new CookieAssertions(exchangeResult, this);
+		}
 	}
 
 	private static class DefaultBodyContentSpec implements BodyContentSpec {

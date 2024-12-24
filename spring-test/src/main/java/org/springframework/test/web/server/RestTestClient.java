@@ -79,6 +79,11 @@ public interface RestTestClient {
 		<B> BodySpec<B, ?> expectBody(Class<B> bodyType);
 
 
+		/**
+		 * Assertions on the cookies of the response.
+		 */
+		CookieAssertions expectCookie();
+
 	}
 
 	/**
