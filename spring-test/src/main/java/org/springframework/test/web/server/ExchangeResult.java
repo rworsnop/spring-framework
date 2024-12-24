@@ -18,15 +18,16 @@ package org.springframework.test.web.server;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse;
-import static org.springframework.test.util.AssertionErrors.*;
 
 /**
  * @author Rob Worsnop
@@ -41,19 +42,27 @@ public class ExchangeResult {
 			MediaType.parseMediaType("application/*+json"), MediaType.APPLICATION_XML,
 			MediaType.parseMediaType("text/*"), MediaType.APPLICATION_FORM_URLENCODED);
 
-	private final @Nullable ConvertibleClientHttpResponse clientResponse;
+	private final ConvertibleClientHttpResponse clientResponse;
 
 	public ExchangeResult(@Nullable ConvertibleClientHttpResponse clientResponse) {
-		this.clientResponse = clientResponse;
+		this.clientResponse = Objects.requireNonNull(clientResponse, "clientResponse must be non-null");
 	}
 
 	public HttpStatusCode getStatus() {
 		try {
-			assertNotNull("clientResponse unexpectedly null", clientResponse);
 			return clientResponse.getStatusCode();
 		} catch (IOException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	public HttpHeaders getHeaders() {
+		return clientResponse.getHeaders();
+	}
+
+	@Nullable
+	public <T> T getBody(Class<T> bodyType) {
+		return clientResponse.bodyTo(bodyType);
 	}
 
 	/**

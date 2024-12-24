@@ -17,11 +17,13 @@
 package org.springframework.test.web.server;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -77,7 +79,8 @@ public class DefaultRestTestClient implements RestTestClient {
 		public ResponseSpec exchange() {
 			this.requestBodySpec = requestBodySpec.header(RESTTESTCLIENT_REQUEST_ID, requestId);
 			ExchangeResult exchangeResult = requestBodySpec.exchange(
-					(clientRequest, clientResponse) -> new ExchangeResult(clientResponse));
+					(clientRequest, clientResponse) -> new ExchangeResult(clientResponse),
+					false);
 			return new DefaultResponseSpec(exchangeResult);
 		}
 	}
@@ -99,9 +102,32 @@ public class DefaultRestTestClient implements RestTestClient {
 		public BodyContentSpec expectBody() {
 			return new DefaultBodyContentSpec();
 		}
+
+		@Override
+		public <B> BodySpec<B, ?> expectBody(Class<B> bodyType) {
+			return new DefaultBodySpec<>(exchangeResult, bodyType);
+		}
 	}
 
 	private static class DefaultBodyContentSpec implements BodyContentSpec {
 
+	}
+
+	private static class DefaultBodySpec<B, S extends BodySpec<B, S>> implements BodySpec<B, S> {
+
+		private final ExchangeResult exchangeResult;
+		private final Class<B> bodyType;
+
+		public DefaultBodySpec(@Nullable ExchangeResult exchangeResult, Class<B> bodyType) {
+			this.exchangeResult = Objects.requireNonNull(exchangeResult, "exchangeResult must be non-null");
+			this.bodyType = bodyType;
+		}
+
+		@Override
+		public ResponseEntity<B> returnResult() {
+			return ResponseEntity.status(exchangeResult.getStatus())
+					.headers(exchangeResult.getHeaders())
+					.body(exchangeResult.getBody(bodyType));
+		}
 	}
 }

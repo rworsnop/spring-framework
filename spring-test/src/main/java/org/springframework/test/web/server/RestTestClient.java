@@ -19,6 +19,7 @@ package org.springframework.test.web.server;
 import java.net.URI;
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriBuilderFactory;
 
 /**
@@ -69,6 +70,15 @@ public interface RestTestClient {
 		 * assertions on the raw content (for example, isEmpty, JSONPath, etc.).
 		 */
 		BodyContentSpec expectBody();
+
+		/**
+		 * Consume and decode the response body to a single object of type
+		 * {@code <B>} and then apply assertions.
+		 * @param bodyType the expected body type
+		 */
+		<B> BodySpec<B, ?> expectBody(Class<B> bodyType);
+
+
 	}
 
 	/**
@@ -76,6 +86,20 @@ public interface RestTestClient {
 	 */
 	interface BodyContentSpec {
 
+	}
+
+	/**
+	 * Spec for expectations on the response body decoded to a single Object.
+	 *
+	 * @param <S> a self reference to the spec type
+	 * @param <B> the body type
+	 */
+	interface BodySpec<B, S extends BodySpec<B, S>> {
+		/**
+		 * Exit the chained API and return an {@code ResponseEntity} with the
+		 * decoded response content.
+		 */
+		ResponseEntity<B> returnResult();
 	}
 
 	/**
