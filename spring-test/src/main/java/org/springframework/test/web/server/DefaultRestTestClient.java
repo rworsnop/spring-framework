@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ExceptionCollector;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -116,6 +117,28 @@ public class DefaultRestTestClient implements RestTestClient {
 		@Override
 		public HeaderAssertions expectHeader() {
 			return new HeaderAssertions(exchangeResult, this);
+		}
+
+		@Override
+		public ResponseSpec expectAll(ResponseSpecConsumer... consumers) {
+			ExceptionCollector exceptionCollector = new ExceptionCollector();
+			for (ResponseSpecConsumer consumer : consumers) {
+				exceptionCollector.execute(() -> consumer.accept(this));
+			}
+			try {
+				exceptionCollector.assertEmpty();
+			}
+			catch (RuntimeException ex) {
+				throw ex;
+			}
+			catch (Exception ex) {
+				// In theory, a ResponseSpecConsumer should never throw an Exception
+				// that is not a RuntimeException, but since ExceptionCollector may
+				// throw a checked Exception, we handle this to appease the compiler
+				// and in case someone uses a "sneaky throws" technique.
+				throw new AssertionError(ex.getMessage(), ex);
+			}
+			return this;
 		}
 	}
 

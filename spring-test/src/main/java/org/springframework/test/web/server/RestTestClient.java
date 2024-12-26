@@ -18,6 +18,7 @@ package org.springframework.test.web.server;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriBuilderFactory;
@@ -88,6 +89,42 @@ public interface RestTestClient {
 		 * Assertions on the headers of the response.
 		 */
 		HeaderAssertions expectHeader();
+
+		/**
+		 * Apply multiple assertions to a response with the given
+		 * {@linkplain RestTestClient.ResponseSpec.ResponseSpecConsumer consumers}, with the guarantee that
+		 * all assertions will be applied even if one or more assertions fails
+		 * with an exception.
+		 * <p>If a single {@link Error} or {@link RuntimeException} is thrown,
+		 * it will be rethrown.
+		 * <p>If multiple exceptions are thrown, this method will throw an
+		 * {@link AssertionError} whose error message is a summary of all the
+		 * exceptions. In addition, each exception will be added as a
+		 * {@linkplain Throwable#addSuppressed(Throwable) suppressed exception} to
+		 * the {@code AssertionError}.
+		 * <p>This feature is similar to the {@code SoftAssertions} support in
+		 * AssertJ and the {@code assertAll()} support in JUnit Jupiter.
+		 *
+		 * <h4>Example</h4>
+		 * <pre class="code">
+		 * restTestClient.get().uri("/hello").exchange()
+		 *     .expectAll(
+		 *         responseSpec -&gt; responseSpec.expectStatus().isOk(),
+		 *         responseSpec -&gt; responseSpec.expectBody(String.class).isEqualTo("Hello, World!")
+		 *     );
+		 * </pre>
+		 * @param consumers the list of {@code ResponseSpec} consumers
+		 * @since 5.3.10
+		 */
+		ResponseSpec expectAll(ResponseSpecConsumer... consumers);
+
+		/**
+		 * {@link Consumer} of a {@link RestTestClient.ResponseSpec}.
+		 * @see RestTestClient.ResponseSpec#expectAll(RestTestClient.ResponseSpec.ResponseSpecConsumer...)
+		 */
+		@FunctionalInterface
+		interface ResponseSpecConsumer extends Consumer<ResponseSpec> {
+		}
 	}
 
 	/**
