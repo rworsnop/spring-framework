@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *       https://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +18,9 @@ package org.springframework.test.web.server;
 
 import java.io.IOException;
 import java.net.HttpCookie;
-import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Flow;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +36,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse;
 
 /**
+ * Container for request and response details for exchanges performed through
+ * {@link RestTestClient}.
  * @author Rob Worsnop
  */
 public class ExchangeResult {
@@ -57,19 +57,20 @@ public class ExchangeResult {
 
 	public HttpStatusCode getStatus() {
 		try {
-			return clientResponse.getStatusCode();
-		} catch (IOException e) {
-			throw new AssertionError(e);
+			return this.clientResponse.getStatusCode();
+		}
+		catch (IOException ex) {
+			throw new AssertionError(ex);
 		}
 	}
 
 	public HttpHeaders getHeaders() {
-		return clientResponse.getHeaders();
+		return this.clientResponse.getHeaders();
 	}
 
 	@Nullable
 	public <T> T getBody(Class<T> bodyType) {
-		return clientResponse.bodyTo(bodyType);
+		return this.clientResponse.bodyTo(bodyType);
 	}
 
 	/**
@@ -94,7 +95,7 @@ public class ExchangeResult {
 	 * Return response cookies received from the server.
 	 */
 	public MultiValueMap<String, ResponseCookie> getResponseCookies() {
-		return clientResponse.getHeaders().get(HttpHeaders.SET_COOKIE).stream()
+		return Optional.ofNullable(this.clientResponse.getHeaders().get(HttpHeaders.SET_COOKIE)).orElse(List.of()).stream()
 				.flatMap(header -> {
 					Matcher matcher = SAME_SITE_PATTERN.matcher(header);
 					String sameSite = (matcher.matches() ? matcher.group(1) : null);

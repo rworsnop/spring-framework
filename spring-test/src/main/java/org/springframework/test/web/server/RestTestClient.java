@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *       https://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriBuilderFactory;
 
 /**
+ * Client for testing web servers.
+ *
  * @author Rob Worsnop
  */
 public interface RestTestClient {
@@ -42,6 +44,20 @@ public interface RestTestClient {
 	 * @return a spec for specifying the target URL
 	 */
 	RequestHeadersUriSpec<?> get();
+
+	/**
+	 * This server setup option allows you to connect to a live server through
+	 * a client connector.
+	 * <p><pre class="code">
+	 * RestTestClient client = RestTestClient.bindToServer()
+	 *         .baseUrl("http://localhost:8080")
+	 *         .build();
+	 * </pre>
+	 * @return chained API to customize client config
+	 */
+	static Builder bindToServer() {
+		return new DefaultRestTestClientBuilder();
+	}
 
 	/**
 	 * Specification for providing request headers and the URI of a request.
@@ -203,19 +219,4 @@ public interface RestTestClient {
 		 */
 		RestTestClient build();
 	}
-
-	/**
-	 * This server setup option allows you to connect to a live server through
-	 * a client connector.
-	 * <p><pre class="code">
-	 * RestTestClient client = RestTestClient.bindToServer()
-	 *         .baseUrl("http://localhost:8080")
-	 *         .build();
-	 * </pre>
-	 * @return chained API to customize client config
-	 */
-	static Builder bindToServer() {
-		return new DefaultRestTestClientBuilder();
-	}
-
 }

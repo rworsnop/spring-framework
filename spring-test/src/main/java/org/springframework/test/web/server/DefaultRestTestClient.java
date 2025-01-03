@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2024 the original author or authors.
+ * Copyright 2002-2025 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *       https://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,8 @@ import org.springframework.test.util.ExceptionCollector;
 import org.springframework.web.client.RestClient;
 
 /**
+ * Default implementation of {@link RestTestClient}.
+ *
  * @author Rob Worsnop
  */
 public class DefaultRestTestClient implements RestTestClient {
@@ -47,7 +49,7 @@ public class DefaultRestTestClient implements RestTestClient {
 	}
 
 	private RequestBodyUriSpec methodInternal(HttpMethod httpMethod) {
-		return new DefaultRequestBodyUriSpec(restClient.method(httpMethod));
+		return new DefaultRequestBodyUriSpec(this.restClient.method(httpMethod));
 	}
 
 
@@ -66,37 +68,37 @@ public class DefaultRestTestClient implements RestTestClient {
 
 		@Override
 		public RequestBodySpec uri(URI uri) {
-			this.requestBodySpec = requestHeadersUriSpec.uri(uri);
+			this.requestBodySpec = this.requestHeadersUriSpec.uri(uri);
 			return this;
 		}
 
 		@Override
 		public RequestBodySpec header(String headerName, String... headerValues) {
-			this.requestBodySpec = requestHeadersUriSpec.header(headerName, headerValues);
+			this.requestBodySpec = this.requestHeadersUriSpec.header(headerName, headerValues);
 			return this;
 		}
 
 		@Override
 		public ResponseSpec exchange() {
-			this.requestBodySpec = requestBodySpec.header(RESTTESTCLIENT_REQUEST_ID, requestId);
-			ExchangeResult exchangeResult = requestBodySpec.exchange(
+			this.requestBodySpec = this.requestBodySpec.header(RESTTESTCLIENT_REQUEST_ID, this.requestId);
+			ExchangeResult exchangeResult = this.requestBodySpec.exchange(
 					(clientRequest, clientResponse) -> new ExchangeResult(clientResponse),
 					false);
-			return new DefaultResponseSpec(exchangeResult);
+			return new DefaultResponseSpec(Objects.requireNonNull(exchangeResult));
 		}
 	}
 
 	private static class DefaultResponseSpec implements ResponseSpec {
 
-		private final @Nullable ExchangeResult exchangeResult;
+		private final ExchangeResult exchangeResult;
 
-		public DefaultResponseSpec(@Nullable ExchangeResult exchangeResult) {
+		public DefaultResponseSpec(ExchangeResult exchangeResult) {
 			this.exchangeResult = exchangeResult;
 		}
 
 		@Override
 		public StatusAssertions expectStatus() {
-			return new StatusAssertions(exchangeResult, this);
+			return new StatusAssertions(this.exchangeResult, this);
 		}
 
 		@Override
@@ -106,17 +108,17 @@ public class DefaultRestTestClient implements RestTestClient {
 
 		@Override
 		public <B> BodySpec<B, ?> expectBody(Class<B> bodyType) {
-			return new DefaultBodySpec<>(exchangeResult, bodyType);
+			return new DefaultBodySpec<>(this.exchangeResult, bodyType);
 		}
 
 		@Override
 		public CookieAssertions expectCookie() {
-			return new CookieAssertions(exchangeResult, this);
+			return new CookieAssertions(this.exchangeResult, this);
 		}
 
 		@Override
 		public HeaderAssertions expectHeader() {
-			return new HeaderAssertions(exchangeResult, this);
+			return new HeaderAssertions(this.exchangeResult, this);
 		}
 
 		@Override
@@ -158,9 +160,9 @@ public class DefaultRestTestClient implements RestTestClient {
 
 		@Override
 		public ResponseEntity<B> returnResult() {
-			return ResponseEntity.status(exchangeResult.getStatus())
-					.headers(exchangeResult.getHeaders())
-					.body(exchangeResult.getBody(bodyType));
+			return ResponseEntity.status(this.exchangeResult.getStatus())
+					.headers(this.exchangeResult.getHeaders())
+					.body(this.exchangeResult.getBody(this.bodyType));
 		}
 	}
 }
