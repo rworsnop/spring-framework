@@ -20,7 +20,18 @@ import java.net.URI;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import jakarta.servlet.Filter;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.test.web.servlet.DispatcherServletCustomizer;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.util.UriBuilderFactory;
 
 /**
@@ -38,6 +49,10 @@ public interface RestTestClient {
 	 * that information once an {@link ExchangeResult} is available.
 	 */
 	String RESTTESTCLIENT_REQUEST_ID = "RestTestClient-Request-Id";
+
+	static MockMvcServerSpec<?> bindToApplicationContext(WebApplicationContext context) {
+		return new ApplicationContextMockMvcSpec(context);
+	}
 
 	/**
 	 * Prepare an HTTP GET request.
@@ -57,6 +72,86 @@ public interface RestTestClient {
 	 */
 	static Builder bindToServer() {
 		return new DefaultRestTestClientBuilder();
+	}
+
+	/**
+	 * A variant of {@link #bindToServer()} with a pre-configured request factory.
+	 * @return chained API to customize client config
+	 */
+	static Builder bindToServer(ClientHttpRequestFactory requestFactory) {
+		return new DefaultRestTestClientBuilder(RestClient.builder().requestFactory(requestFactory));
+	}
+
+
+	/**
+	 * Base specification for configuring {@link MockMvc}, and a simple facade
+	 * around {@link ConfigurableMockMvcBuilder}.
+	 *
+	 * @param <B> a self reference to the builder type
+	 */
+	interface MockMvcServerSpec<B extends MockMvcServerSpec<B>> {
+		/**
+		 * Add a global filter.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#addFilters(Filter...)}.
+		 */
+		<T extends B> T filters(Filter... filters);
+
+		/**
+		 * Add a filter for specific URL patterns.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#addFilter(Filter, String...)}.
+		 */
+		<T extends B> T filter(Filter filter, String... urlPatterns);
+
+		/**
+		 * Define default request properties that should be merged into all
+		 * performed requests such that input from the client request override
+		 * the default properties defined here.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#defaultRequest(RequestBuilder)}.
+		 */
+		<T extends B> T defaultRequest(RequestBuilder requestBuilder);
+
+		/**
+		 * Define a global expectation that should <em>always</em> be applied to
+		 * every response.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#alwaysExpect(ResultMatcher)}.
+		 */
+		<T extends B> T alwaysExpect(ResultMatcher resultMatcher);
+
+		/**
+		 * Whether to handle HTTP OPTIONS requests.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#dispatchOptions(boolean)}.
+		 */
+		<T extends B> T dispatchOptions(boolean dispatchOptions);
+
+		/**
+		 * Allow customization of {@code DispatcherServlet}.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#addDispatcherServletCustomizer(DispatcherServletCustomizer)}.
+		 */
+		<T extends B> T dispatcherServletCustomizer(DispatcherServletCustomizer customizer);
+
+		/**
+		 * Add a {@code MockMvcConfigurer} that automates MockMvc setup.
+		 * <p>This is delegated to
+		 * {@link ConfigurableMockMvcBuilder#apply(MockMvcConfigurer)}.
+		 */
+		<T extends B> T apply(MockMvcConfigurer configurer);
+
+
+		/**
+		 * Proceed to configure and build the test client.
+		 */
+		Builder configureClient();
+
+		/**
+		 * Shortcut to build the test client.
+		 */
+		RestTestClient build();
 	}
 
 	/**

@@ -16,27 +16,20 @@
 
 package org.springframework.test.web.server;
 
-import org.springframework.web.client.RestClient;
+import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
+import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-/**
- * Default implementation of {@link RestTestClient.Builder}.
- *
- * @author Rob Worsnop
- */
-class DefaultRestTestClientBuilder implements RestTestClient.Builder {
+public class ApplicationContextMockMvcSpec extends AbstractMockMvcServerSpec<ApplicationContextMockMvcSpec> {
+	private final DefaultMockMvcBuilder mockMvcBuilder;
 
-	private final RestClient.Builder restClientBuilder;
-
-	DefaultRestTestClientBuilder() {
-		this.restClientBuilder = RestClient.builder();
-	}
-
-	DefaultRestTestClientBuilder(RestClient.Builder restClientBuilder) {
-		this.restClientBuilder = restClientBuilder;
+	public ApplicationContextMockMvcSpec(WebApplicationContext context) {
+		this.mockMvcBuilder = MockMvcBuilders.webAppContextSetup(context);
 	}
 
 	@Override
-	public RestTestClient build() {
-		return new DefaultRestTestClient(this.restClientBuilder);
+	protected ConfigurableMockMvcBuilder<?> getMockMvcBuilder() {
+		return this.mockMvcBuilder;
 	}
 }
