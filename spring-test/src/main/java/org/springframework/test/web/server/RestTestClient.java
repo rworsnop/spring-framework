@@ -24,14 +24,17 @@ import jakarta.servlet.Filter;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
 import org.springframework.test.web.servlet.DispatcherServletCustomizer;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
+import org.springframework.test.web.servlet.setup.RouterFunctionMockMvcBuilder;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.util.UriBuilderFactory;
 
 /**
@@ -50,15 +53,56 @@ public interface RestTestClient {
 	 */
 	String RESTTESTCLIENT_REQUEST_ID = "RestTestClient-Request-Id";
 
-	static MockMvcServerSpec<?> bindToApplicationContext(WebApplicationContext context) {
-		return new ApplicationContextMockMvcSpec(context);
-	}
-
 	/**
 	 * Prepare an HTTP GET request.
 	 * @return a spec for specifying the target URL
 	 */
 	RequestHeadersUriSpec<?> get();
+
+	/**
+	 * Begin creating a {@link RestTestClient} by providing the {@code @Controller}
+	 * instance(s) to handle requests with.
+	 * <p>Internally this is delegated to and equivalent to using
+	 * {@link org.springframework.test.web.servlet.setup.MockMvcBuilders#standaloneSetup(Object...)}
+	 * to initialize {@link MockMvc}.
+	 */
+	static ControllerSpec bindToController(Object... controllers) {
+		return new StandaloneMockMvcSpec(controllers);
+	}
+
+	/**
+	 * Begin creating a {@link RestTestClient} by providing the {@link RouterFunction}
+	 * instance(s) to handle requests with.
+	 * <p>Internally this is delegated to and equivalent to using
+	 * {@link org.springframework.test.web.servlet.setup.MockMvcBuilders#routerFunctions(RouterFunction[])}
+	 * to initialize {@link MockMvc}.
+	 */
+	static RouterFunctionSpec bindToRouterFunction(RouterFunction<?>... routerFunctions) {
+		return new RouterFunctionMockMvcSpec(routerFunctions);
+	}
+
+	/**
+	 * Begin creating a {@link RestTestClient} by providing a
+	 * {@link WebApplicationContext} with Spring MVC infrastructure and
+	 * controllers.
+	 * <p>Internally this is delegated to and equivalent to using
+	 * {@link org.springframework.test.web.servlet.setup.MockMvcBuilders#webAppContextSetup(WebApplicationContext)}
+	 * to initialize {@code MockMvc}.
+	 */
+	static MockMvcServerSpec<?> bindToApplicationContext(WebApplicationContext context) {
+		return new ApplicationContextMockMvcSpec(context);
+	}
+
+
+
+	/**
+	 * Begin creating a {@link RestTestClient} by providing an already
+	 * initialized {@link MockMvc} instance to use as the server.
+	 */
+	static RestTestClient.Builder bindTo(MockMvc mockMvc) {
+		ClientHttpRequestFactory requestFactory = new MockMvcClientHttpRequestFactory(mockMvc);
+		return RestTestClient.bindToServer(requestFactory);
+	}
 
 	/**
 	 * This server setup option allows you to connect to a live server through
@@ -80,6 +124,20 @@ public interface RestTestClient {
 	 */
 	static Builder bindToServer(ClientHttpRequestFactory requestFactory) {
 		return new DefaultRestTestClientBuilder(RestClient.builder().requestFactory(requestFactory));
+	}
+
+	/**
+	 * Specification for customizing controller configuration.
+	 */
+	interface ControllerSpec extends MockMvcServerSpec<ControllerSpec> {
+	}
+
+	/**
+	 * Specification for configuring {@link MockMvc} to test one or more
+	 * {@linkplain RouterFunction router functions}
+	 * directly, and a simple facade around {@link RouterFunctionMockMvcBuilder}.
+	 */
+	interface RouterFunctionSpec extends MockMvcServerSpec<RouterFunctionSpec> {
 	}
 
 

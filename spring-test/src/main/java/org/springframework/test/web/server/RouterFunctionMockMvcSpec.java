@@ -16,21 +16,25 @@
 
 package org.springframework.test.web.server;
 
+import org.springframework.test.web.server.RestTestClient.RouterFunctionSpec;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
-import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.setup.RouterFunctionMockMvcBuilder;
+import org.springframework.web.servlet.function.RouterFunction;
 
 /**
- * Simple wrapper around a {@link DefaultMockMvcBuilder}.
+ * Simple wrapper around a {@link RouterFunctionMockMvcBuilder} that implements
+ * {@link RouterFunctionSpec}.
  *
  * @author Rob Worsnop
  */
-public class ApplicationContextMockMvcSpec extends AbstractMockMvcServerSpec<ApplicationContextMockMvcSpec> {
-	private final DefaultMockMvcBuilder mockMvcBuilder;
+public class RouterFunctionMockMvcSpec extends AbstractMockMvcServerSpec<RouterFunctionSpec>
+		implements RouterFunctionSpec {
 
-	public ApplicationContextMockMvcSpec(WebApplicationContext context) {
-		this.mockMvcBuilder = MockMvcBuilders.webAppContextSetup(context);
+	private final RouterFunctionMockMvcBuilder mockMvcBuilder;
+
+	RouterFunctionMockMvcSpec(RouterFunction<?>... routerFunctions) {
+		this.mockMvcBuilder = MockMvcBuilders.routerFunctions(routerFunctions);
 	}
 
 	@Override

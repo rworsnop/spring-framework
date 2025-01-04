@@ -17,20 +17,22 @@
 package org.springframework.test.web.server;
 
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
-import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 
 /**
- * Simple wrapper around a {@link DefaultMockMvcBuilder}.
+ * Simple wrapper around a {@link StandaloneMockMvcBuilder} that implements
+ * {@link RestTestClient.ControllerSpec}.
  *
  * @author Rob Worsnop
  */
-public class ApplicationContextMockMvcSpec extends AbstractMockMvcServerSpec<ApplicationContextMockMvcSpec> {
-	private final DefaultMockMvcBuilder mockMvcBuilder;
+public class StandaloneMockMvcSpec extends AbstractMockMvcServerSpec<RestTestClient.ControllerSpec>
+	implements RestTestClient.ControllerSpec {
 
-	public ApplicationContextMockMvcSpec(WebApplicationContext context) {
-		this.mockMvcBuilder = MockMvcBuilders.webAppContextSetup(context);
+	private final StandaloneMockMvcBuilder mockMvcBuilder;
+
+	public StandaloneMockMvcSpec(Object... controllers) {
+		this.mockMvcBuilder = MockMvcBuilders.standaloneSetup(controllers);
 	}
 
 	@Override
