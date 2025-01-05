@@ -32,13 +32,13 @@ import org.springframework.web.client.RestClient;
  *
  * @author Rob Worsnop
  */
-public class DefaultRestTestClient implements RestTestClient {
+class DefaultRestTestClient implements RestTestClient {
 
 	private final RestClient restClient;
 
 	private final AtomicLong requestIndex = new AtomicLong();
 
-	public DefaultRestTestClient(RestClient.Builder restClientBuilder) {
+	DefaultRestTestClient(RestClient.Builder restClientBuilder) {
 		this.restClient = restClientBuilder.build();
 
 	}

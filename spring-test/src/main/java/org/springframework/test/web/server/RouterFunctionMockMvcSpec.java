@@ -28,7 +28,7 @@ import org.springframework.web.servlet.function.RouterFunction;
  *
  * @author Rob Worsnop
  */
-public class RouterFunctionMockMvcSpec extends AbstractMockMvcServerSpec<RouterFunctionSpec>
+class RouterFunctionMockMvcSpec extends AbstractMockMvcServerSpec<RouterFunctionSpec>
 		implements RouterFunctionSpec {
 
 	private final RouterFunctionMockMvcBuilder mockMvcBuilder;

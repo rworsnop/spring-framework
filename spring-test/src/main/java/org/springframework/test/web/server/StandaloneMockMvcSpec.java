@@ -26,12 +26,12 @@ import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
  *
  * @author Rob Worsnop
  */
-public class StandaloneMockMvcSpec extends AbstractMockMvcServerSpec<RestTestClient.ControllerSpec>
+class StandaloneMockMvcSpec extends AbstractMockMvcServerSpec<RestTestClient.ControllerSpec>
 	implements RestTestClient.ControllerSpec {
 
 	private final StandaloneMockMvcBuilder mockMvcBuilder;
 
-	public StandaloneMockMvcSpec(Object... controllers) {
+	StandaloneMockMvcSpec(Object... controllers) {
 		this.mockMvcBuilder = MockMvcBuilders.standaloneSetup(controllers);
 	}
 
