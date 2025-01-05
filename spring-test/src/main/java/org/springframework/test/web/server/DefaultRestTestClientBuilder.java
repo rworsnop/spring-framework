@@ -36,6 +36,12 @@ class DefaultRestTestClientBuilder implements RestTestClient.Builder {
 	}
 
 	@Override
+	public RestTestClient.Builder baseUrl(String baseUrl) {
+		this.restClientBuilder.baseUrl(baseUrl);
+		return this;
+	}
+
+	@Override
 	public RestTestClient build() {
 		return new DefaultRestTestClient(this.restClientBuilder);
 	}

@@ -315,6 +315,11 @@ public interface RestTestClient {
 		 * decoded response content.
 		 */
 		ResponseEntity<B> returnResult();
+
+		/**
+		 * Assert the extracted body is equal to the given value.
+		 */
+		<T extends S> T isEqualTo(B expected);
 	}
 
 	/**
@@ -333,6 +338,15 @@ public interface RestTestClient {
 		 * @return spec to add headers or perform the exchange
 		 */
 		S uri(URI uri);
+
+		/**
+		 * Specify the URI for the request using a URI template and URI variables.
+		 * <p>If a {@link UriBuilderFactory} was configured for the client (for example,
+		 * with a base URI) it will be used to expand the URI template.
+		 * @return spec to add headers or perform the exchange
+		 */
+		S uri(String uri, Object... uriVariables);
+
 	}
 
 
@@ -367,9 +381,16 @@ public interface RestTestClient {
 	}
 
 		interface Builder {
-		/**
-		 * Build the {@link RestTestClient} instance.
-		 */
-		RestTestClient build();
-	}
+			/**
+			 * Build the {@link RestTestClient} instance.
+			 */
+			RestTestClient build();
+
+			/**
+			 * Configure a base URI as described in
+			 * {@link RestClient#create(String)
+			 * WebClient.create(String)}.
+			 */
+			Builder baseUrl(String baseUrl);
+		}
 }

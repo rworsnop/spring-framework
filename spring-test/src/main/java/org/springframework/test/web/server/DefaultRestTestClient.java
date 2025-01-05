@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.util.ExceptionCollector;
 import org.springframework.web.client.RestClient;
 
@@ -69,6 +70,12 @@ class DefaultRestTestClient implements RestTestClient {
 		@Override
 		public RequestBodySpec uri(URI uri) {
 			this.requestBodySpec = this.requestHeadersUriSpec.uri(uri);
+			return this;
+		}
+
+		@Override
+		public RequestBodySpec uri(String uriTemplate, Object... uriVariables) {
+			this.requestBodySpec = this.requestHeadersUriSpec.uri(uriTemplate, uriVariables);
 			return this;
 		}
 
@@ -150,19 +157,31 @@ class DefaultRestTestClient implements RestTestClient {
 
 	private static class DefaultBodySpec<B, S extends BodySpec<B, S>> implements BodySpec<B, S> {
 
-		private final ExchangeResult exchangeResult;
+		private final ExchangeResult result;
 		private final Class<B> bodyType;
 
-		public DefaultBodySpec(@Nullable ExchangeResult exchangeResult, Class<B> bodyType) {
-			this.exchangeResult = Objects.requireNonNull(exchangeResult, "exchangeResult must be non-null");
+		public DefaultBodySpec(@Nullable ExchangeResult result, Class<B> bodyType) {
+			this.result = Objects.requireNonNull(result, "exchangeResult must be non-null");
 			this.bodyType = bodyType;
 		}
 
 		@Override
 		public ResponseEntity<B> returnResult() {
-			return ResponseEntity.status(this.exchangeResult.getStatus())
-					.headers(this.exchangeResult.getHeaders())
-					.body(this.exchangeResult.getBody(this.bodyType));
+			return ResponseEntity.status(this.result.getStatus())
+					.headers(this.result.getHeaders())
+					.body(this.result.getBody(this.bodyType));
+		}
+
+		@Override
+		public <T extends S> T isEqualTo(B expected) {
+			this.result.assertWithDiagnostics(() ->
+					AssertionErrors.assertEquals("Response body", expected, this.result.getBody(this.bodyType)));
+			return self();
+		}
+
+		@SuppressWarnings("unchecked")
+		private <T extends S> T self() {
+			return (T) this;
 		}
 	}
 }
