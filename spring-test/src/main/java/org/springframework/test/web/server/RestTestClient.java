@@ -22,6 +22,8 @@ import java.util.function.Consumer;
 
 import jakarta.servlet.Filter;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
@@ -58,6 +60,12 @@ public interface RestTestClient {
 	 * @return a spec for specifying the target URL
 	 */
 	RequestHeadersUriSpec<?> get();
+
+	/**
+	 * Prepare an HTTP POST request.
+	 * @return a spec for specifying the target URL
+	 */
+	RequestBodyUriSpec post();
 
 	/**
 	 * Begin creating a {@link RestTestClient} by providing the {@code @Controller}
@@ -300,7 +308,10 @@ public interface RestTestClient {
 	 * Spec for expectations on the response body content.
 	 */
 	interface BodyContentSpec {
-
+		/**
+		 * Assert the response body is empty and return the exchange result.
+		 */
+		ExchangeResult isEmpty();
 	}
 
 	/**
@@ -378,6 +389,23 @@ public interface RestTestClient {
 	 * Specification for providing body of a request.
 	 */
 	interface RequestBodySpec extends RequestHeadersSpec<RequestBodySpec> {
+		/**
+		 * Set the {@linkplain MediaType media type} of the body, as specified
+		 * by the {@code Content-Type} header.
+		 * @param contentType the content type
+		 * @return the same instance
+		 * @see HttpHeaders#setContentType(MediaType)
+		 */
+		RequestBodySpec contentType(MediaType contentType);
+
+		/**
+		 * Set the body to the given {@code Object} value. This method invokes the
+		 * {@link RequestBodySpec#bodyValue(Object)
+		 * bodyValue} method on the underlying {@code RestClient}.
+		 * @param body the value to write to the request body
+		 * @return spec for further declaration of the request
+		 */
+		RequestHeadersSpec<?> bodyValue(Object body);
 	}
 
 		interface Builder {

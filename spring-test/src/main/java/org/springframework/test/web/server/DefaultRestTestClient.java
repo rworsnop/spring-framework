@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.util.ExceptionCollector;
@@ -47,6 +48,11 @@ class DefaultRestTestClient implements RestTestClient {
 	@Override
 	public RequestHeadersUriSpec<?> get() {
 		return methodInternal(HttpMethod.GET);
+	}
+
+	@Override
+	public RequestBodyUriSpec post() {
+		return methodInternal(HttpMethod.POST);
 	}
 
 	private RequestBodyUriSpec methodInternal(HttpMethod httpMethod) {
@@ -86,6 +92,18 @@ class DefaultRestTestClient implements RestTestClient {
 		}
 
 		@Override
+		public RequestBodySpec contentType(MediaType contentType) {
+			this.requestBodySpec = this.requestHeadersUriSpec.contentType(contentType);
+			return this;
+		}
+
+		@Override
+		public RequestHeadersSpec<?> bodyValue(Object body) {
+			this.requestHeadersUriSpec.body(body);
+			return this;
+		}
+
+		@Override
 		public ResponseSpec exchange() {
 			this.requestBodySpec = this.requestBodySpec.header(RESTTESTCLIENT_REQUEST_ID, this.requestId);
 			ExchangeResult exchangeResult = this.requestBodySpec.exchange(
@@ -110,7 +128,7 @@ class DefaultRestTestClient implements RestTestClient {
 
 		@Override
 		public BodyContentSpec expectBody() {
-			return new DefaultBodyContentSpec();
+			return new DefaultBodyContentSpec(this.exchangeResult);
 		}
 
 		@Override
@@ -152,7 +170,19 @@ class DefaultRestTestClient implements RestTestClient {
 	}
 
 	private static class DefaultBodyContentSpec implements BodyContentSpec {
+		private final ExchangeResult result;
 
+		public DefaultBodyContentSpec(ExchangeResult result) {
+			this.result = result;
+		}
+
+		@Override
+		public ExchangeResult isEmpty() {
+			this.result.assertWithDiagnostics(() ->
+					AssertionErrors.assertTrue("Expected empty body",
+							this.result.getBody(byte[].class) == null));
+			return this.result;
+		}
 	}
 
 	private static class DefaultBodySpec<B, S extends BodySpec<B, S>> implements BodySpec<B, S> {
