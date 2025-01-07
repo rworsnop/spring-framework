@@ -68,6 +68,11 @@ public interface RestTestClient {
 	RequestBodyUriSpec post();
 
 	/**
+	 * Return a builder to mutate properties of this test client.
+	 */
+	Builder mutate();
+
+	/**
 	 * Begin creating a {@link RestTestClient} by providing the {@code @Controller}
 	 * instance(s) to handle requests with.
 	 * <p>Internally this is delegated to and equivalent to using
@@ -409,6 +414,14 @@ public interface RestTestClient {
 	}
 
 		interface Builder {
+
+			/**
+			 * Apply the given {@code Consumer} to this builder instance.
+			 * <p>This can be useful for applying pre-packaged customizations.
+			 * @param builderConsumer the consumer to apply
+			 */
+			Builder apply(Consumer<Builder> builderConsumer);
+
 			/**
 			 * Build the {@link RestTestClient} instance.
 			 */

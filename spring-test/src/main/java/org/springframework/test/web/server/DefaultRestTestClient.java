@@ -40,9 +40,11 @@ class DefaultRestTestClient implements RestTestClient {
 
 	private final AtomicLong requestIndex = new AtomicLong();
 
+	private final RestClient.Builder restClientBuilder;
+
 	DefaultRestTestClient(RestClient.Builder restClientBuilder) {
 		this.restClient = restClientBuilder.build();
-
+		this.restClientBuilder = restClientBuilder;
 	}
 
 	@Override
@@ -53,6 +55,11 @@ class DefaultRestTestClient implements RestTestClient {
 	@Override
 	public RequestBodyUriSpec post() {
 		return methodInternal(HttpMethod.POST);
+	}
+
+	@Override
+	public Builder mutate() {
+		return new DefaultRestTestClientBuilder(this.restClientBuilder);
 	}
 
 	private RequestBodyUriSpec methodInternal(HttpMethod httpMethod) {

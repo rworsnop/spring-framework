@@ -16,6 +16,8 @@
 
 package org.springframework.test.web.server;
 
+import java.util.function.Consumer;
+
 import org.springframework.web.client.RestClient;
 
 /**
@@ -33,6 +35,12 @@ class DefaultRestTestClientBuilder implements RestTestClient.Builder {
 
 	DefaultRestTestClientBuilder(RestClient.Builder restClientBuilder) {
 		this.restClientBuilder = restClientBuilder;
+	}
+
+	@Override
+	public RestTestClient.Builder apply(Consumer<RestTestClient.Builder> builderConsumer) {
+		builderConsumer.accept(this);
+		return this;
 	}
 
 	@Override
