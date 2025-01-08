@@ -34,6 +34,7 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
 import org.springframework.test.web.servlet.setup.RouterFunctionMockMvcBuilder;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -374,6 +375,25 @@ public interface RestTestClient {
 	 * @param <S> a self reference to the spec type
 	 */
 	interface RequestHeadersSpec<S extends RequestHeadersSpec<S>> {
+
+		/**
+		 * Add a cookie with the given name and value.
+		 * @param name the cookie name
+		 * @param value the cookie value
+		 * @return the same instance
+		 */
+		S cookie(String name, String value);
+
+		/**
+		 * Manipulate this request's cookies with the given consumer. The
+		 * map provided to the consumer is "live", so that the consumer can be used to
+		 * {@linkplain MultiValueMap#set(Object, Object) overwrite} existing header values,
+		 * {@linkplain MultiValueMap#remove(Object) remove} values, or use any of the other
+		 * {@link MultiValueMap} methods.
+		 * @param cookiesConsumer a function that consumes the cookies map
+		 * @return this builder
+		 */
+		S cookies(Consumer<MultiValueMap<String, String>> cookiesConsumer);
 
 		/**
 		 * Add the given, single header value under the given name.

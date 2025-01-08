@@ -64,7 +64,7 @@ public class ExchangeResult {
 		}
 	}
 
-	public HttpHeaders getHeaders() {
+	public HttpHeaders getResponseHeaders() {
 		return this.clientResponse.getHeaders();
 	}
 

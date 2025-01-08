@@ -19,6 +19,7 @@ package org.springframework.test.web.server;
 import java.net.URI;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.util.ExceptionCollector;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -89,6 +91,18 @@ class DefaultRestTestClient implements RestTestClient {
 		@Override
 		public RequestBodySpec uri(String uriTemplate, Object... uriVariables) {
 			this.requestBodySpec = this.requestHeadersUriSpec.uri(uriTemplate, uriVariables);
+			return this;
+		}
+
+		@Override
+		public RequestBodySpec cookie(String name, String value) {
+			this.requestBodySpec = this.requestHeadersUriSpec.cookie(name, value);
+			return this;
+		}
+
+		@Override
+		public RequestBodySpec cookies(Consumer<MultiValueMap<String, String>> cookiesConsumer) {
+			this.requestBodySpec = this.requestHeadersUriSpec.cookies(cookiesConsumer);
 			return this;
 		}
 
@@ -205,7 +219,7 @@ class DefaultRestTestClient implements RestTestClient {
 		@Override
 		public ResponseEntity<B> returnResult() {
 			return ResponseEntity.status(this.result.getStatus())
-					.headers(this.result.getHeaders())
+					.headers(this.result.getResponseHeaders())
 					.body(this.result.getBody(this.bodyType));
 		}
 

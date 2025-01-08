@@ -16,6 +16,16 @@
 
 package org.springframework.test.web.server;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.util.CollectionUtils;
+
+import static org.springframework.test.util.AssertionErrors.assertEquals;
+import static org.springframework.test.util.AssertionErrors.assertTrue;
 import static org.springframework.test.util.AssertionErrors.fail;
 
 /**
@@ -36,13 +46,59 @@ public class HeaderAssertions {
 	}
 
 	/**
+	 * Expect a header with the given name to match the specified values.
+	 */
+	public RestTestClient.ResponseSpec valueEquals(String headerName, String... values) {
+		return assertHeader(headerName, Arrays.asList(values), getHeaders().getOrEmpty(headerName));
+	}
+
+	/**
+	 * Match the first value of the response header with a regex.
+	 * @param name the header name
+	 * @param pattern the regex pattern
+	 */
+	public RestTestClient.ResponseSpec valueMatches(String name, String pattern) {
+		String value = getRequiredValue(name);
+		String message = getMessage(name) + "=[" + value + "] does not match [" + pattern + "]";
+		this.exchangeResult.assertWithDiagnostics(() -> assertTrue(message, value.matches(pattern)));
+		return this.responseSpec;
+	}
+
+	/**
 	 * Expect that the header with the given name is present.
 	 */
 	public RestTestClient.ResponseSpec exists(String name) {
-		if (!this.exchangeResult.getHeaders().containsHeader(name)) {
+		if (!this.exchangeResult.getResponseHeaders().containsHeader(name)) {
 			String message = getMessage(name) + " does not exist";
 			this.exchangeResult.assertWithDiagnostics(() -> fail(message));
 		}
+		return this.responseSpec;
+	}
+
+	private HttpHeaders getHeaders() {
+		return this.exchangeResult.getResponseHeaders();
+	}
+
+	private String getRequiredValue(String name) {
+		return getRequiredValues(name).get(0);
+	}
+
+	private List<String> getRequiredValues(String name) {
+		List<String> values = getHeaders().get(name);
+		if (!CollectionUtils.isEmpty(values)) {
+			return values;
+		}
+		else {
+			this.exchangeResult.assertWithDiagnostics(() -> fail(getMessage(name) + " not found"));
+		}
+		throw new IllegalStateException("This code path should not be reachable");
+	}
+
+	private RestTestClient.ResponseSpec assertHeader(String name, @Nullable Object expected, @Nullable Object actual) {
+		this.exchangeResult.assertWithDiagnostics(() -> {
+			String message = getMessage(name);
+			assertEquals(message, expected, actual);
+		});
 		return this.responseSpec;
 	}
 
