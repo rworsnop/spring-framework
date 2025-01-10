@@ -51,8 +51,13 @@ public class ExchangeResult {
 
 	private final ConvertibleClientHttpResponse clientResponse;
 
-	public ExchangeResult(@Nullable ConvertibleClientHttpResponse clientResponse) {
+	ExchangeResult(@Nullable ConvertibleClientHttpResponse clientResponse) {
 		this.clientResponse = Objects.requireNonNull(clientResponse, "clientResponse must be non-null");
+	}
+
+	ExchangeResult(ExchangeResult result) {
+		this(result.clientResponse);
+		this.diagnosticsLogged = result.diagnosticsLogged;
 	}
 
 	public HttpStatusCode getStatus() {

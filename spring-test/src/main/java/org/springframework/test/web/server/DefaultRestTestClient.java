@@ -17,7 +17,10 @@
 package org.springframework.test.web.server;
 
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -26,8 +29,12 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.json.JsonAssert;
+import org.springframework.test.json.JsonComparator;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.util.ExceptionCollector;
+import org.springframework.util.MimeType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
@@ -71,7 +78,7 @@ class DefaultRestTestClient implements RestTestClient {
 
 	private class DefaultRequestBodyUriSpec implements RequestBodyUriSpec {
 
-		private RestClient.RequestBodyUriSpec requestHeadersUriSpec;
+		private final RestClient.RequestBodyUriSpec requestHeadersUriSpec;
 		private RestClient.RequestBodySpec requestBodySpec;
 		private final String requestId;
 
@@ -80,6 +87,12 @@ class DefaultRestTestClient implements RestTestClient {
 			this.requestHeadersUriSpec = spec;
 			this.requestBodySpec = spec;
 			this.requestId = String.valueOf(requestIndex.incrementAndGet());
+		}
+
+		@Override
+		public RequestBodySpec accept(MediaType... acceptableMediaTypes) {
+			this.requestBodySpec = this.requestHeadersUriSpec.accept(acceptableMediaTypes);
+			return this;
 		}
 
 		@Override
@@ -149,12 +162,14 @@ class DefaultRestTestClient implements RestTestClient {
 
 		@Override
 		public BodyContentSpec expectBody() {
-			return new DefaultBodyContentSpec(this.exchangeResult);
+			byte[] body = this.exchangeResult.getBody(byte[].class);
+			return new DefaultBodyContentSpec( new EntityExchangeResult<>(this.exchangeResult, body));
 		}
 
 		@Override
 		public <B> BodySpec<B, ?> expectBody(Class<B> bodyType) {
-			return new DefaultBodySpec<>(this.exchangeResult, bodyType);
+			B body = this.exchangeResult.getBody(bodyType);
+			return new DefaultBodySpec<>(new EntityExchangeResult<>(this.exchangeResult, body));
 		}
 
 		@Override
@@ -191,42 +206,73 @@ class DefaultRestTestClient implements RestTestClient {
 	}
 
 	private static class DefaultBodyContentSpec implements BodyContentSpec {
-		private final ExchangeResult result;
+		private final EntityExchangeResult<byte[]> result;
 
-		public DefaultBodyContentSpec(ExchangeResult result) {
+		public DefaultBodyContentSpec(EntityExchangeResult<byte[]> result) {
 			this.result = result;
 		}
 
 		@Override
-		public ExchangeResult isEmpty() {
+		public EntityExchangeResult<Void> isEmpty() {
 			this.result.assertWithDiagnostics(() ->
 					AssertionErrors.assertTrue("Expected empty body",
 							this.result.getBody(byte[].class) == null));
-			return this.result;
+			return new EntityExchangeResult<>(this.result, null);
+		}
+
+		@Override
+		public BodyContentSpec json(String expectedJson, JsonCompareMode compareMode) {
+			return json(expectedJson, JsonAssert.comparator(compareMode));
+		}
+
+		@Override
+		public BodyContentSpec json(String expectedJson, JsonComparator comparator) {
+			this.result.assertWithDiagnostics(() -> {
+				try {
+					comparator.assertIsMatch(expectedJson, getBodyAsString());
+				}
+				catch (Exception ex) {
+					throw new AssertionError("JSON parsing error", ex);
+				}
+			});
+			return this;
+		}
+
+		@Override
+		public JsonPathAssertions jsonPath(String expression) {
+			return new JsonPathAssertions(this, getBodyAsString(), expression, null);
+		}
+
+		private String getBodyAsString() {
+			byte[] body = this.result.getResponseBody();
+			if (body == null || body.length == 0) {
+				return "";
+			}
+			Charset charset = Optional.ofNullable(this.result.getResponseHeaders().getContentType())
+					.map(MimeType::getCharset).orElse(StandardCharsets.UTF_8);
+			return new String(body, charset);
 		}
 	}
 
 	private static class DefaultBodySpec<B, S extends BodySpec<B, S>> implements BodySpec<B, S> {
 
-		private final ExchangeResult result;
-		private final Class<B> bodyType;
+		private final EntityExchangeResult<B> result;
 
-		public DefaultBodySpec(@Nullable ExchangeResult result, Class<B> bodyType) {
+		public DefaultBodySpec(@Nullable EntityExchangeResult<B> result) {
 			this.result = Objects.requireNonNull(result, "exchangeResult must be non-null");
-			this.bodyType = bodyType;
 		}
 
 		@Override
 		public ResponseEntity<B> returnResult() {
 			return ResponseEntity.status(this.result.getStatus())
 					.headers(this.result.getResponseHeaders())
-					.body(this.result.getBody(this.bodyType));
+					.body(this.result.getResponseBody());
 		}
 
 		@Override
 		public <T extends S> T isEqualTo(B expected) {
 			this.result.assertWithDiagnostics(() ->
-					AssertionErrors.assertEquals("Response body", expected, this.result.getBody(this.bodyType)));
+					AssertionErrors.assertEquals("Response body", expected, this.result.getResponseBody()));
 			return self();
 		}
 

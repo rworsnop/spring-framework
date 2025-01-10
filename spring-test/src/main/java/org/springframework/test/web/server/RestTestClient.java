@@ -26,6 +26,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.test.json.JsonComparator;
+import org.springframework.test.json.JsonCompareMode;
+import org.springframework.test.json.JsonComparison;
 import org.springframework.test.web.client.MockMvcClientHttpRequestFactory;
 import org.springframework.test.web.servlet.DispatcherServletCustomizer;
 import org.springframework.test.web.servlet.MockMvc;
@@ -297,7 +300,6 @@ public interface RestTestClient {
 		 *     );
 		 * </pre>
 		 * @param consumers the list of {@code ResponseSpec} consumers
-		 * @since 5.3.10
 		 */
 		ResponseSpec expectAll(ResponseSpecConsumer... consumers);
 
@@ -318,6 +320,54 @@ public interface RestTestClient {
 		 * Assert the response body is empty and return the exchange result.
 		 */
 		ExchangeResult isEmpty();
+
+		/**
+		 * Parse the expected and actual response content as JSON and perform a
+		 * comparison verifying that they contain the same attribute-value pairs
+		 * regardless of formatting with <em>lenient</em> checking (extensible
+		 * and non-strict array ordering).
+		 * <p>Use of this method requires the
+		 * <a href="https://jsonassert.skyscreamer.org/">JSONassert</a> library
+		 * to be on the classpath.
+		 * @param expectedJson the expected JSON content
+		 * @see #json(String, JsonCompareMode)
+		 */
+		default BodyContentSpec json(String expectedJson) {
+			return json(expectedJson, JsonCompareMode.LENIENT);
+		}
+
+		/**
+		 * Parse the expected and actual response content as JSON and perform a
+		 * comparison using the given {@linkplain JsonCompareMode mode}. If the
+		 * comparison failed, throws an {@link AssertionError} with the message
+		 * of the {@link JsonComparison}.
+		 * <p>Use of this method requires the
+		 * <a href="https://jsonassert.skyscreamer.org/">JSONassert</a> library
+		 * to be on the classpath.
+		 * @param expectedJson the expected JSON content
+		 * @param compareMode the compare mode
+		 * @see #json(String)
+		 */
+		BodyContentSpec json(String expectedJson, JsonCompareMode compareMode);
+
+		/**
+		 * Parse the expected and actual response content as JSON and perform a
+		 * comparison using the given {@link JsonComparator}. If the comparison
+		 * failed, throws an {@link AssertionError} with the message  of the
+		 * {@link JsonComparison}.
+		 * @param expectedJson the expected JSON content
+		 * @param comparator the comparator to use
+		 */
+		BodyContentSpec json(String expectedJson, JsonComparator comparator);
+
+		/**
+		 * Access to response body assertions using a
+		 * <a href="https://github.com/jayway/JsonPath">JsonPath</a> expression
+		 * to inspect a specific subset of the body.
+		 * @param expression the JsonPath expression
+		 */
+		JsonPathAssertions jsonPath(String expression);
+
 	}
 
 	/**
@@ -375,6 +425,13 @@ public interface RestTestClient {
 	 * @param <S> a self reference to the spec type
 	 */
 	interface RequestHeadersSpec<S extends RequestHeadersSpec<S>> {
+		/**
+		 * Set the list of acceptable {@linkplain MediaType media types}, as
+		 * specified by the {@code Accept} header.
+		 * @param acceptableMediaTypes the acceptable media types
+		 * @return the same instance
+		 */
+		S accept(MediaType... acceptableMediaTypes);
 
 		/**
 		 * Add a cookie with the given name and value.

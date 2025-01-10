@@ -19,6 +19,7 @@ package org.springframework.test.web.server;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.test.util.AssertionErrors;
+import org.springframework.test.web.server.RestTestClient.ResponseSpec;
 
 import static org.springframework.test.util.AssertionErrors.assertNotNull;
 
@@ -27,15 +28,15 @@ import static org.springframework.test.util.AssertionErrors.assertNotNull;
  *
  * @author Rob Worsnop
  *
- * @see RestTestClient.ResponseSpec#expectStatus()
+ * @see ResponseSpec#expectStatus()
  */
 public class StatusAssertions {
 
 	private final ExchangeResult exchangeResult;
 
-	private final RestTestClient.ResponseSpec responseSpec;
+	private final ResponseSpec responseSpec;
 
-	public StatusAssertions(ExchangeResult exchangeResult, RestTestClient.ResponseSpec responseSpec) {
+	public StatusAssertions(ExchangeResult exchangeResult, ResponseSpec responseSpec) {
 		this.exchangeResult = exchangeResult;
 		this.responseSpec = responseSpec;
 	}
@@ -44,7 +45,7 @@ public class StatusAssertions {
 	/**
 	 * Assert the response status as an {@link HttpStatusCode}.
 	 */
-	public RestTestClient.ResponseSpec isEqualTo(HttpStatusCode status) {
+	public ResponseSpec isEqualTo(HttpStatusCode status) {
 		HttpStatusCode actual = this.exchangeResult.getStatus();
 		this.exchangeResult.assertWithDiagnostics(() -> AssertionErrors.assertEquals("Status", status, actual));
 		return this.responseSpec;
@@ -53,25 +54,33 @@ public class StatusAssertions {
 	/**
 	 * Assert the response status code is {@code HttpStatus.OK} (200).
 	 */
-	public RestTestClient.ResponseSpec isOk() {
+	public ResponseSpec isOk() {
 		return assertStatusAndReturn(HttpStatus.OK);
 	}
 
 	/**
+	 * Assert the response status code is {@code HttpStatus.CREATED} (201).
+	 */
+	public ResponseSpec isCreated() {
+		return assertStatusAndReturn(HttpStatus.CREATED);
+	}
+
+
+	/**
 	 * Assert the response status code is {@code HttpStatus.NOT_FOUND} (404).
 	 */
-	public RestTestClient.ResponseSpec isNotFound() {
+	public ResponseSpec isNotFound() {
 		return assertStatusAndReturn(HttpStatus.NOT_FOUND);
 	}
 
 	/**
 	 * Assert the response status code is {@code HttpStatus.BAD_REQUEST} (400).
 	 */
-	public RestTestClient.ResponseSpec isBadRequest() {
+	public ResponseSpec isBadRequest() {
 		return assertStatusAndReturn(HttpStatus.BAD_REQUEST);
 	}
 
-	private RestTestClient.ResponseSpec assertStatusAndReturn(HttpStatus expected) {
+	private ResponseSpec assertStatusAndReturn(HttpStatus expected) {
 		assertNotNull("exchangeResult unexpectedly null", this.exchangeResult);
 		HttpStatusCode actual = this.exchangeResult.getStatus();
 		this.exchangeResult.assertWithDiagnostics(() -> AssertionErrors.assertEquals("Status", expected, actual));

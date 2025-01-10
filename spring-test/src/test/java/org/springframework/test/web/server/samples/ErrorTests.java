@@ -37,16 +37,14 @@ class ErrorTests {
 	void notFound(){
 		this.client.get().uri("/invalid")
 				.exchange()
-				.expectStatus().isNotFound()
-				.expectBody(Void.class);
+				.expectStatus().isNotFound();
 	}
 
 	@Test
 	void serverException() {
 		this.client.get().uri("/server-error")
 				.exchange()
-				.expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
-				.expectBody(Void.class);
+				.expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@RestController
