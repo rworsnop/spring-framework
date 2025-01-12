@@ -19,6 +19,7 @@ package org.springframework.test.web.server;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,6 +39,7 @@ import org.springframework.test.json.JsonComparator;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.util.ExceptionCollector;
+import org.springframework.test.util.XmlExpectationsHelper;
 import org.springframework.util.MimeType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -249,8 +251,26 @@ class DefaultRestTestClient implements RestTestClient {
 		}
 
 		@Override
+		public BodyContentSpec xml(String expectedXml) {
+			this.result.assertWithDiagnostics(() -> {
+				try {
+					new XmlExpectationsHelper().assertXmlEqual(expectedXml, getBodyAsString());
+				}
+				catch (Exception ex) {
+					throw new AssertionError("XML parsing error", ex);
+				}
+			});
+			return this;
+		}
+
+		@Override
 		public JsonPathAssertions jsonPath(String expression) {
 			return new JsonPathAssertions(this, getBodyAsString(), expression, null);
+		}
+
+		@Override
+		public XpathAssertions xpath(String expression, @Nullable Map<String, String> namespaces, Object... args) {
+			return new XpathAssertions(this, expression, namespaces, args);
 		}
 
 		private String getBodyAsString() {
@@ -261,6 +281,11 @@ class DefaultRestTestClient implements RestTestClient {
 			Charset charset = Optional.ofNullable(this.result.getResponseHeaders().getContentType())
 					.map(MimeType::getCharset).orElse(StandardCharsets.UTF_8);
 			return new String(body, charset);
+		}
+
+		@Override
+		public EntityExchangeResult<byte[]> returnResult() {
+			return this.result;
 		}
 	}
 

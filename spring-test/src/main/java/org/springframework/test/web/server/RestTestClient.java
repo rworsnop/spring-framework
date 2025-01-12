@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 import jakarta.servlet.Filter;
 import org.hamcrest.Matcher;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -370,6 +371,42 @@ public interface RestTestClient {
 		BodyContentSpec json(String expectedJson, JsonComparator comparator);
 
 		/**
+		 * Parse expected and actual response content as XML and assert that
+		 * the two are "similar", i.e. they contain the same elements and
+		 * attributes regardless of order.
+		 * <p>Use of this method requires the
+		 * <a href="https://github.com/xmlunit/xmlunit">XMLUnit</a> library on
+		 * the classpath.
+		 * @param expectedXml the expected XML content.
+		 * @see org.springframework.test.util.XmlExpectationsHelper#assertXmlEqual(String, String)
+		 */
+		BodyContentSpec xml(String expectedXml);
+
+		/**
+		 * Access to response body assertions using an XPath expression to
+		 * inspect a specific subset of the body.
+		 * <p>The XPath expression can be a parameterized string using
+		 * formatting specifiers as defined in {@link String#format}.
+		 * @param expression the XPath expression
+		 * @param args arguments to parameterize the expression
+		 * @see #xpath(String, Map, Object...)
+		 */
+		default XpathAssertions xpath(String expression, Object... args) {
+			return xpath(expression, null, args);
+		}
+
+		/**
+		 * Access to response body assertions with specific namespaces using an
+		 * XPath expression to inspect a specific subset of the body.
+		 * <p>The XPath expression can be a parameterized string using
+		 * formatting specifiers as defined in {@link String#format}.
+		 * @param expression the XPath expression
+		 * @param namespaces the namespaces to use
+		 * @param args arguments to parameterize the expression
+		 */
+		XpathAssertions xpath(String expression, @Nullable Map<String, String> namespaces, Object... args);
+
+		/**
 		 * Access to response body assertions using a
 		 * <a href="https://github.com/jayway/JsonPath">JsonPath</a> expression
 		 * to inspect a specific subset of the body.
@@ -377,6 +414,11 @@ public interface RestTestClient {
 		 */
 		JsonPathAssertions jsonPath(String expression);
 
+		/**
+		 * Exit the chained API and return an {@code ExchangeResult} with the
+		 * raw response content.
+		 */
+		EntityExchangeResult<byte[]> returnResult();
 	}
 
 	/**
