@@ -17,11 +17,15 @@
 package org.springframework.test.web.server;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import jakarta.servlet.Filter;
+import org.hamcrest.Matcher;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -265,6 +269,11 @@ public interface RestTestClient {
 		 */
 		<B> BodySpec<B, ?> expectBody(Class<B> bodyType);
 
+		/**
+		 * Alternative to {@link #expectBody(Class)} that accepts information
+		 * about a target type with generics.
+		 */
+		<B> BodySpec<B, ?> expectBody(ParameterizedTypeReference<B> bodyType);
 
 		/**
 		 * Assertions on the cookies of the response.
@@ -378,6 +387,22 @@ public interface RestTestClient {
 	 */
 	interface BodySpec<B, S extends BodySpec<B, S>> {
 		/**
+		 * Transform the extracted the body with a function, for example, extracting a
+		 * property, and assert the mapped value with a {@link Matcher}.
+		 */
+		<T extends S, R> T value(Function<B, R> bodyMapper, Matcher<? super R> matcher);
+
+		/**
+		 * Assert the extracted body with a {@link Consumer}.
+		 */
+		<T extends S> T value(Consumer<B> consumer);
+
+		/**
+		 * Assert the exchange result with the given {@link Consumer}.
+		 */
+		<T extends S> T consumeWith(Consumer<EntityExchangeResult<B>> consumer);
+
+		/**
 		 * Exit the chained API and return an {@code ResponseEntity} with the
 		 * decoded response content.
 		 */
@@ -387,6 +412,34 @@ public interface RestTestClient {
 		 * Assert the extracted body is equal to the given value.
 		 */
 		<T extends S> T isEqualTo(B expected);
+	}
+
+	/**
+	 * Spec for expectations on the response body decoded to a List.
+	 *
+	 * @param <E> the body list element type
+	 */
+	interface ListBodySpec<E> extends BodySpec<List<E>, ListBodySpec<E>> {
+
+		/**
+		 * Assert the extracted list of values is of the given size.
+		 * @param size the expected size
+		 */
+		ListBodySpec<E> hasSize(int size);
+
+		/**
+		 * Assert the extracted list of values contains the given elements.
+		 * @param elements the elements to check
+		 */
+		@SuppressWarnings("unchecked")
+		ListBodySpec<E> contains(E... elements);
+
+		/**
+		 * Assert the extracted list of values doesn't contain the given elements.
+		 * @param elements the elements to check
+		 */
+		@SuppressWarnings("unchecked")
+		ListBodySpec<E> doesNotContain(E... elements);
 	}
 
 	/**

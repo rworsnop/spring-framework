@@ -23,9 +23,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -173,6 +177,12 @@ class DefaultRestTestClient implements RestTestClient {
 		}
 
 		@Override
+		public <B> BodySpec<B, ?> expectBody(ParameterizedTypeReference<B> bodyType) {
+			B body = this.exchangeResult.getBody(bodyType);
+			return new DefaultBodySpec<>(new EntityExchangeResult<>(this.exchangeResult, body));
+		}
+
+		@Override
 		public CookieAssertions expectCookie() {
 			return new CookieAssertions(this.exchangeResult, this);
 		}
@@ -262,6 +272,10 @@ class DefaultRestTestClient implements RestTestClient {
 			this.result = Objects.requireNonNull(result, "exchangeResult must be non-null");
 		}
 
+		protected EntityExchangeResult<B> getResult() {
+			return this.result;
+		}
+
 		@Override
 		public ResponseEntity<B> returnResult() {
 			return ResponseEntity.status(this.result.getStatus())
@@ -273,6 +287,27 @@ class DefaultRestTestClient implements RestTestClient {
 		public <T extends S> T isEqualTo(B expected) {
 			this.result.assertWithDiagnostics(() ->
 					AssertionErrors.assertEquals("Response body", expected, this.result.getResponseBody()));
+			return self();
+		}
+
+		@Override
+		public <T extends S, R> T value(Function<B, R> bodyMapper, Matcher<? super R> matcher) {
+			this.result.assertWithDiagnostics(() -> {
+				B body = this.result.getResponseBody();
+				MatcherAssert.assertThat(bodyMapper.apply(body), matcher);
+			});
+			return self();
+		}
+
+		@Override
+		public <T extends S> T value(Consumer<B> consumer) {
+			this.result.assertWithDiagnostics(() -> consumer.accept(this.result.getResponseBody()));
+			return self();
+		}
+
+		@Override
+		public <T extends S> T consumeWith(Consumer<EntityExchangeResult<B>> consumer) {
+			this.result.assertWithDiagnostics(() -> consumer.accept(this.result));
 			return self();
 		}
 

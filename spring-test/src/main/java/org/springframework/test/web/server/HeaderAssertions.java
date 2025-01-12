@@ -22,6 +22,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 
 import static org.springframework.test.util.AssertionErrors.assertEquals;
@@ -62,6 +63,20 @@ public class HeaderAssertions {
 		String message = getMessage(name) + "=[" + value + "] does not match [" + pattern + "]";
 		this.exchangeResult.assertWithDiagnostics(() -> assertTrue(message, value.matches(pattern)));
 		return this.responseSpec;
+	}
+
+	/**
+	 * Expect a "Content-Type" header with the given value.
+	 */
+	public RestTestClient.ResponseSpec contentType(MediaType mediaType) {
+		return assertHeader("Content-Type", mediaType, getHeaders().getContentType());
+	}
+
+	/**
+	 * Expect a "Content-Type" header with the given value.
+	 */
+	public RestTestClient.ResponseSpec contentType(String mediaType) {
+		return contentType(MediaType.parseMediaType(mediaType));
 	}
 
 	/**

@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
@@ -76,6 +77,17 @@ public class ExchangeResult {
 	@Nullable
 	public <T> T getBody(Class<T> bodyType) {
 		return this.clientResponse.bodyTo(bodyType);
+	}
+
+	@Nullable
+	public <T> T getBody(ParameterizedTypeReference<T> bodyType) {
+		return this.clientResponse.bodyTo(bodyType);
+	}
+
+	@Nullable
+	public <E> List<E> getBodyList(Class<E> elementType) {
+		ParameterizedTypeReference<List<E>> bodyType = new ParameterizedTypeReference<>() {};
+		return getBody(bodyType);
 	}
 
 	/**
