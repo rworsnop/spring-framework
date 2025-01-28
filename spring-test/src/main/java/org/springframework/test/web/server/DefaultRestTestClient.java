@@ -316,6 +316,7 @@ class DefaultRestTestClient implements RestTestClient {
 		}
 
 		@Override
+		@SuppressWarnings("NullAway") // https://github.com/uber/NullAway/issues/1129
 		public <T extends S, R> T value(Function<B, R> bodyMapper, Matcher<? super R> matcher) {
 			this.result.assertWithDiagnostics(() -> {
 				B body = this.result.getResponseBody();

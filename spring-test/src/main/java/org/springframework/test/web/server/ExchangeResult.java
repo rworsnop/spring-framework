@@ -39,10 +39,12 @@ import org.springframework.web.client.RestClient.RequestHeadersSpec.ConvertibleC
 /**
  * Container for request and response details for exchanges performed through
  * {@link RestTestClient}.
+ *
  * @author Rob Worsnop
  */
 public class ExchangeResult {
 	private static final Pattern SAME_SITE_PATTERN = Pattern.compile("(?i).*SameSite=(Strict|Lax|None).*");
+	private static final Pattern PARTITIONED_PATTERN = Pattern.compile("(?i).*;\\s*Partitioned(\\s*;.*|\\s*)$");
 
 
 	private static final Log logger = LogFactory.getLog(ExchangeResult.class);
@@ -116,14 +118,15 @@ public class ExchangeResult {
 				.flatMap(header -> {
 					Matcher matcher = SAME_SITE_PATTERN.matcher(header);
 					String sameSite = (matcher.matches() ? matcher.group(1) : null);
-					return HttpCookie.parse(header).stream().map(cookie -> toResponseCookie(cookie, sameSite));
+					boolean partitioned = PARTITIONED_PATTERN.matcher(header).matches();
+					return HttpCookie.parse(header).stream().map(cookie -> toResponseCookie(cookie, sameSite, partitioned));
 				})
 				.collect(LinkedMultiValueMap::new,
 						(cookies, cookie) -> cookies.add(cookie.getName(), cookie),
 						LinkedMultiValueMap::addAll);
 	}
 
-	private static ResponseCookie toResponseCookie(HttpCookie cookie, @Nullable String sameSite) {
+	private static ResponseCookie toResponseCookie(HttpCookie cookie, @Nullable String sameSite, boolean partitioned) {
 		return ResponseCookie.from(cookie.getName(), cookie.getValue())
 				.domain(cookie.getDomain())
 				.httpOnly(cookie.isHttpOnly())
@@ -131,6 +134,7 @@ public class ExchangeResult {
 				.path(cookie.getPath())
 				.secure(cookie.getSecure())
 				.sameSite(sameSite)
+				.partitioned(partitioned)
 				.build();
 	}
 }
