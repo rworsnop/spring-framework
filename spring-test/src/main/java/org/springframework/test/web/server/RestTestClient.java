@@ -531,7 +531,7 @@ public interface RestTestClient {
 		/**
 		 * Assert the response body is empty and return the exchange result.
 		 */
-		ExchangeResult isEmpty();
+		EntityExchangeResult<Void> isEmpty();
 
 		/**
 		 * Parse the expected and actual response content as JSON and perform a
