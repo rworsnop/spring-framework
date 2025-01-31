@@ -27,8 +27,8 @@ import org.springframework.web.client.RestClient;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.mock;
+import static org.mockito.BDDMockito.when;
 
 /**
  * Tests for {@link StatusAssertions}.
