@@ -303,6 +303,65 @@ public interface RestTestClient {
 	 * directly, and a simple facade around {@link RouterFunctionMockMvcBuilder}.
 	 */
 	interface RouterFunctionSpec extends MockMvcServerSpec<RouterFunctionSpec> {
+
+		/**
+		 * Set the message converters to use.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#setMessageConverters(HttpMessageConverter[])}.
+		 */
+		RouterFunctionSpec messageConverters(HttpMessageConverter<?>... messageConverters);
+
+		/**
+		 * Add global interceptors.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#addInterceptors(HandlerInterceptor...)}.
+		 */
+		RouterFunctionSpec interceptors(HandlerInterceptor... interceptors);
+
+		/**
+		 * Add interceptors for specific patterns.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#addMappedInterceptors(String[], HandlerInterceptor...)}.
+		 */
+		RouterFunctionSpec mappedInterceptors(
+				String @Nullable [] pathPatterns, HandlerInterceptor... interceptors);
+
+		/**
+		 * Specify the timeout value for async execution.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#setAsyncRequestTimeout(long)}.
+		 */
+		RouterFunctionSpec asyncRequestTimeout(long timeout);
+
+		/**
+		 * Set the HandlerExceptionResolver types to use.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#setHandlerExceptionResolvers(HandlerExceptionResolver...)}.
+		 */
+		RouterFunctionSpec handlerExceptionResolvers(HandlerExceptionResolver... exceptionResolvers);
+
+		/**
+		 * Set up view resolution.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#setViewResolvers(ViewResolver...)}.
+		 */
+		RouterFunctionSpec viewResolvers(ViewResolver... resolvers);
+
+		/**
+		 * Set up a single {@link ViewResolver} with a fixed view.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#setSingleView(View)}.
+		 */
+		RouterFunctionSpec singleView(View view);
+
+		/**
+		 * Enable URL path matching with parsed
+		 * {@link org.springframework.web.util.pattern.PathPattern PathPatterns}.
+		 * <p>This is delegated to
+		 * {@link RouterFunctionMockMvcBuilder#setPatternParser(PathPatternParser)}.
+		 */
+		RouterFunctionSpec patternParser(PathPatternParser parser);
+
 	}
 
 

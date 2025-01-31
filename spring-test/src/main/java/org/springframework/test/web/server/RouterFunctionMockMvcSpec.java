@@ -16,11 +16,19 @@
 
 package org.springframework.test.web.server;
 
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.test.web.server.RestTestClient.RouterFunctionSpec;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.RouterFunctionMockMvcBuilder;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.View;
+import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * Simple wrapper around a {@link RouterFunctionMockMvcBuilder} that implements
@@ -35,6 +43,55 @@ class RouterFunctionMockMvcSpec extends AbstractMockMvcServerSpec<RouterFunction
 
 	RouterFunctionMockMvcSpec(RouterFunction<?>... routerFunctions) {
 		this.mockMvcBuilder = MockMvcBuilders.routerFunctions(routerFunctions);
+	}
+
+
+	@Override
+	public RouterFunctionSpec messageConverters(HttpMessageConverter<?>... messageConverters) {
+		this.mockMvcBuilder.setMessageConverters(messageConverters);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec interceptors(HandlerInterceptor... interceptors) {
+		mappedInterceptors(null, interceptors);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec mappedInterceptors(String @Nullable [] pathPatterns, HandlerInterceptor... interceptors) {
+		this.mockMvcBuilder.addMappedInterceptors(pathPatterns, interceptors);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec asyncRequestTimeout(long timeout) {
+		this.mockMvcBuilder.setAsyncRequestTimeout(timeout);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec handlerExceptionResolvers(HandlerExceptionResolver... exceptionResolvers) {
+		this.mockMvcBuilder.setHandlerExceptionResolvers(exceptionResolvers);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec viewResolvers(ViewResolver... resolvers) {
+		this.mockMvcBuilder.setViewResolvers(resolvers);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec singleView(View view) {
+		this.mockMvcBuilder.setSingleView(view);
+		return this;
+	}
+
+	@Override
+	public RouterFunctionSpec patternParser(PathPatternParser parser) {
+		this.mockMvcBuilder.setPatternParser(parser);
+		return this;
 	}
 
 	@Override
