@@ -21,16 +21,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import jakarta.servlet.Filter;
 import org.hamcrest.Matcher;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.format.support.FormattingConversionService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.test.json.JsonComparator;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.json.JsonComparison;
@@ -42,11 +45,24 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcConfigurer;
 import org.springframework.test.web.servlet.setup.RouterFunctionMockMvcBuilder;
+import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 import org.springframework.util.MultiValueMap;
+import org.springframework.validation.Validator;
+import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
+import org.springframework.web.servlet.FlashMapManager;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.View;
+import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.UriBuilderFactory;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * Client for testing web servers.
@@ -152,6 +168,133 @@ public interface RestTestClient {
 	 * Specification for customizing controller configuration.
 	 */
 	interface ControllerSpec extends MockMvcServerSpec<ControllerSpec> {
+		/**
+		 * Register {@link org.springframework.web.bind.annotation.ControllerAdvice}
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setControllerAdvice(Object...)}.
+		 */
+		ControllerSpec controllerAdvice(Object... controllerAdvice);
+
+		/**
+		 * Set the message converters to use.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setMessageConverters(HttpMessageConverter[])}.
+		 */
+		ControllerSpec messageConverters(HttpMessageConverter<?>... messageConverters);
+
+		/**
+		 * Provide a custom {@link Validator}.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setValidator(Validator)}.
+		 */
+		ControllerSpec validator(Validator validator);
+
+		/**
+		 * Provide a conversion service.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setConversionService(FormattingConversionService)}.
+		 */
+		ControllerSpec conversionService(FormattingConversionService conversionService);
+
+		/**
+		 * Add global interceptors.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#addInterceptors(HandlerInterceptor...)}.
+		 */
+		ControllerSpec interceptors(HandlerInterceptor... interceptors);
+
+		/**
+		 * Add interceptors for specific patterns.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#addMappedInterceptors(String[], HandlerInterceptor...)}.
+		 */
+		ControllerSpec mappedInterceptors(
+				String @Nullable [] pathPatterns, HandlerInterceptor... interceptors);
+
+		/**
+		 * Set a ContentNegotiationManager.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setContentNegotiationManager(ContentNegotiationManager)}.
+		 */
+		ControllerSpec contentNegotiationManager(ContentNegotiationManager manager);
+
+		/**
+		 * Specify the timeout value for async execution.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setAsyncRequestTimeout(long)}.
+		 */
+		ControllerSpec asyncRequestTimeout(long timeout);
+
+		/**
+		 * Provide custom argument resolvers.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setCustomArgumentResolvers(HandlerMethodArgumentResolver...)}.
+		 */
+		ControllerSpec customArgumentResolvers(HandlerMethodArgumentResolver... argumentResolvers);
+
+		/**
+		 * Provide custom return value handlers.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setCustomReturnValueHandlers(HandlerMethodReturnValueHandler...)}.
+		 */
+		ControllerSpec customReturnValueHandlers(HandlerMethodReturnValueHandler... handlers);
+
+		/**
+		 * Set the HandlerExceptionResolver types to use.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setHandlerExceptionResolvers(HandlerExceptionResolver...)}.
+		 */
+		ControllerSpec handlerExceptionResolvers(HandlerExceptionResolver... exceptionResolvers);
+
+		/**
+		 * Set up view resolution.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setViewResolvers(ViewResolver...)}.
+		 */
+		ControllerSpec viewResolvers(ViewResolver... resolvers);
+
+		/**
+		 * Set up a single {@link ViewResolver} with a fixed view.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setSingleView(View)}.
+		 */
+		ControllerSpec singleView(View view);
+
+		/**
+		 * Provide the LocaleResolver to use.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setLocaleResolver(LocaleResolver)}.
+		 */
+		ControllerSpec localeResolver(LocaleResolver localeResolver);
+
+		/**
+		 * Provide a custom FlashMapManager.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setFlashMapManager(FlashMapManager)}.
+		 */
+		ControllerSpec flashMapManager(FlashMapManager flashMapManager);
+
+		/**
+		 * Enable URL path matching with parsed
+		 * {@link org.springframework.web.util.pattern.PathPattern PathPatterns}.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setPatternParser(PathPatternParser)}.
+		 */
+		ControllerSpec patternParser(PathPatternParser parser);
+
+		/**
+		 * Configure placeholder values to use.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#addPlaceholderValue(String, String)}.
+		 */
+		ControllerSpec placeholderValue(String name, String value);
+
+		/**
+		 * Configure factory for a custom {@link RequestMappingHandlerMapping}.
+		 * <p>This is delegated to
+		 * {@link StandaloneMockMvcBuilder#setCustomHandlerMapping(Supplier)}.
+		 */
+		ControllerSpec customHandlerMapping(Supplier<RequestMappingHandlerMapping> factory);
 	}
 
 	/**
